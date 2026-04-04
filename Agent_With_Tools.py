@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import streamlit as st
 import os
 import time
 from functools import lru_cache
@@ -22,6 +22,8 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
 load_dotenv()
+
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 
 # --- Models ---
 llm1 = ChatGroq(model="openai/gpt-oss-120b")
