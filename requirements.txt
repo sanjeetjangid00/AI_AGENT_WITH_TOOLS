@@ -8,4 +8,4 @@ streamlit
 requests
 langchain-text-splitters
 langchain-huggingface
-faiss
+
