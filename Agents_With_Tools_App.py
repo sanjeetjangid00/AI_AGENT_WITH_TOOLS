@@ -24,7 +24,7 @@ if "HF_TOKEN" in st.secrets:
 
 from Agent_With_Tools import build_workflow
 
-
+workflow = build_workflow(None)
 
 # ---------------------------------------------------------------------------
 # Page config  (must be first Streamlit call)
@@ -407,7 +407,6 @@ def _init(key: str, value) -> None:
 
 _init("thread_id",      str(uuid.uuid4()))
 _init("mode",           "normal")
-_init("workflow",       build_workflow(None))
 _init("file_path",      "")
 _init("file_name",      "")
 _init("file_hash",      "")
