@@ -1,5 +1,4 @@
 from __future__ import annotations
-import streamlit as st
 import os
 import time
 from functools import lru_cache
@@ -23,7 +22,10 @@ from langgraph.prebuilt import ToolNode, tools_condition
 
 load_dotenv()
 
-GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+ALPHAVANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+STOCK_API_KEY = os.getenv("STOCK_API_KEY")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 # --- Models ---
 llm1 = ChatGroq(model="openai/gpt-oss-120b")
@@ -240,9 +242,6 @@ def build_workflow(file_path: str | None = None) -> object:
     graph.add_node("tools", tool_node)
 
     graph.add_edge(START, "chat_node")
-    # FIX: tools_condition routes to "tools" OR END.
-    # Do NOT add a redundant unconditional edge from chat_node → END;
-    # that conflicts with the conditional edge and causes graph errors.
     graph.add_conditional_edges("chat_node", tools_condition)
     graph.add_edge("tools", "chat_node")
 
