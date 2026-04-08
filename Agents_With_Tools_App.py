@@ -24,7 +24,6 @@ if "HF_TOKEN" in st.secrets:
 
 from Agent_With_Tools import build_workflow
 
-workflow = build_workflow(None)
 
 # ---------------------------------------------------------------------------
 # Page config  (must be first Streamlit call)
@@ -411,7 +410,11 @@ _init("file_path",      "")
 _init("file_name",      "")
 _init("file_hash",      "")
 _init("document_ready", False)
-_init("chat_history",   [])   # list[dict]: role, content, tools_used, ts
+_init("chat_history",   [])
+
+# Add this — only built once, after secrets are already in os.environ
+if "workflow" not in st.session_state:
+    st.session_state.workflow = build_workflow(None)
 
 config = {"configurable": {"thread_id": st.session_state.thread_id}}
 
@@ -599,6 +602,7 @@ if user_input:
         reply, tools_used = stream_and_render(
             st.session_state.workflow, initial_state, config
         )
+        
 
     # Persist assistant turn (including which tools were called).
     st.session_state.chat_history.append(
