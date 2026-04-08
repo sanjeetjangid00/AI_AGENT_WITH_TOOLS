@@ -107,7 +107,7 @@ def current_weather(city: str) -> dict | str:
 def get_stock_price(symbol: str) -> dict:
     """Get the latest stock quote for a ticker symbol using Alpha Vantage."""
     ALPHAVANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY")
-    if not api_key:
+    if not ALPHAVANTAGE_API_KEY:
         return {"error": "ALPHAVANTAGE_API_KEY not set in environment."}
     try:
         response = requests.get(
