@@ -14,7 +14,7 @@ if "ALPHAVANTAGE_API_KEY" in st.secrets:
     os.environ["ALPHAVANTAGE_API_KEY"] = st.secrets["ALPHAVANTAGE_API_KEY"]
 
 if "GROQ_API_KEY" in st.secrets:
-    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+    GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
     
 if "STOCK_API_KEY" in st.secrets:
     os.environ["STOCK_API_KEY"] = st.secrets["STOCK_API_KEY"]
@@ -414,7 +414,7 @@ _init("chat_history",   [])
 
 # Add this — only built once, after secrets are already in os.environ
 if "workflow" not in st.session_state:
-    st.session_state.workflow = build_workflow(None)
+    st.session_state.workflow = build_workflow(None, groq_api_key=GROQ_API_KEY)
 
 config = {"configurable": {"thread_id": st.session_state.thread_id}}
 
@@ -468,7 +468,8 @@ with st.sidebar:
             st.session_state.update(
                 document_ready=False, file_path="", file_name="",
                 file_hash="", mode="normal",
-                workflow=build_workflow(None), chat_history=[],
+                workflow=build_workflow(None, groq_api_key=GROQ_API_KEY),
+                chat_history=[],
             )
             st.rerun()
 
@@ -506,15 +507,15 @@ def process_uploaded_file(file_obj) -> None:
     with st.spinner(f"Indexing '{file_name}'…"):
         with open(save_path, "wb") as fh:
             fh.write(file_bytes)
-        st.session_state.update(
-            file_path      = str(save_path),
-            file_name      = file_name,
-            file_hash      = file_hash,
-            workflow       = build_workflow(str(save_path)),
-            document_ready = True,
-            mode           = "document",
-            chat_history   = [],
-        )
+            st.session_state.update(
+    file_path      = str(save_path),
+    file_name      = file_name,
+    file_hash      = file_hash,
+    workflow       = build_workflow(str(save_path), groq_api_key=GROQ_API_KEY),
+    document_ready = True,
+    mode           = "document",
+    chat_history   = [],
+)
 
     st.toast(f"'{file_name}' indexed successfully", icon="📄")
 
@@ -524,18 +525,15 @@ if uploaded_file is not None:
     process_uploaded_file(uploaded_file)
 else:
     if st.session_state.document_ready:
-        # File was removed from the uploader — exit document mode.
         st.session_state.update(
             document_ready = False,
             mode           = "normal",
-            workflow       = build_workflow(None),
+            workflow       = build_workflow(None, groq_api_key=GROQ_API_KEY),
             chat_history   = [],
         )
-    elif st.session_state.mode != "normal":
-        st.session_state.mode     = "normal"
-        st.session_state.workflow = build_workflow(None)
-
-
+        elif st.session_state.mode != "normal":
+            st.session_state.mode     = "normal"
+            st.session_state.workflow = build_workflow(None, groq_api_key=GROQ_API_KEY)
 # ---------------------------------------------------------------------------
 # Main area — header
 # ---------------------------------------------------------------------------
