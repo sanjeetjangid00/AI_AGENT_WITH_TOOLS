@@ -28,6 +28,10 @@ STOCK_API_KEY = os.getenv("STOCK_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 
+# --- Models ---
+llm1 = ChatGroq(model="openai/gpt-oss-120b")
+llm2 = ChatGroq(model="openai/gpt-oss-20b")
+
 # --- Embeddings ---
 embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
@@ -103,13 +107,13 @@ def current_weather(city: str) -> dict | str:
 @tool
 def get_stock_price(symbol: str) -> dict:
     """Get the latest stock quote for a ticker symbol using Alpha Vantage."""
-    ALPHAVANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY")
-    if not ALPHAVANTAGE_API_KEY:
+    api_key = os.getenv("ALPHAVANTAGE_API_KEY")
+    if not api_key:
         return {"error": "ALPHAVANTAGE_API_KEY not set in environment."}
     try:
         response = requests.get(
             "https://www.alphavantage.co/query",
-            params={"function": "GLOBAL_QUOTE", "symbol": symbol, "apikey": ALPHAVANTAGE_API_KEY},
+            params={"function": "GLOBAL_QUOTE", "symbol": symbol, "apikey": api_key},
             timeout=20,
         )
         response.raise_for_status()
@@ -129,43 +133,42 @@ internet_search = DuckDuckGoSearchRun(
 )
 
 
-# def make_generator_tool(file_path: str):
-#     """
-#     Build a RAG tool bound to a specific uploaded document.
-#     The tool name is fixed as 'generator'; only one document is active at a time.
-#     """
+def make_generator_tool(file_path: str):
+    """
+    Build a RAG tool bound to a specific uploaded document.
+    The tool name is fixed as 'generator'; only one document is active at a time.
+    """
 
-#     @tool
-#     def generator(query: str) -> str:
-#         """
-#         Answer questions about the uploaded document using retrieval-augmented generation.
-#         Use this tool whenever the user asks about the content of the uploaded file.
-#         """
-#         try:
-#             retriever = get_retriever(file_path, k=5)
-#             docs = retriever.invoke(query)
+    @tool
+    def generator(query: str) -> str:
+        """
+        Answer questions about the uploaded document using retrieval-augmented generation.
+        Use this tool whenever the user asks about the content of the uploaded file.
+        """
+        try:
+            retriever = get_retriever(file_path, k=5)
+            docs = retriever.invoke(query)
 
-#             if not docs:
-#                 return "I don't know based on the provided document."
+            if not docs:
+                return "I don't know based on the provided document."
 
-#             context_text = "\n\n".join(doc.page_content for doc in docs)
+            context_text = "\n\n".join(doc.page_content for doc in docs)
 
-#             prompt = (
-#                 "You are a document-grounded assistant.\n\n"
-#                 "Answer ONLY from the provided context.\n"
-#                 "If the context does not contain enough information, say exactly:\n"
-#                 '"I don\'t know based on the provided document."\n\n'
-#                 f"User question:\n{query}\n\n"
-#                 f"Retrieved context:\n{context_text}\n\n"
-#                 "Answer:"
-#             )
-#             llm2 = ChatGroq(model="openai/gpt-oss-20b", api_key=groq_api_key)
-#             return llm2.invoke(prompt).content
+            prompt = (
+                "You are a document-grounded assistant.\n\n"
+                "Answer ONLY from the provided context.\n"
+                "If the context does not contain enough information, say exactly:\n"
+                '"I don\'t know based on the provided document."\n\n'
+                f"User question:\n{query}\n\n"
+                f"Retrieved context:\n{context_text}\n\n"
+                "Answer:"
+            )
+            return llm2.invoke(prompt).content
 
-#         except Exception as e:  # noqa: BLE001
-#             return f"RAG tool error: {e}"
+        except Exception as e:  # noqa: BLE001
+            return f"RAG tool error: {e}"
 
-#     return generator
+    return generator
 
 
 # ---------------------------------------------------------------------------
@@ -212,39 +215,20 @@ Document mode is active:
 # Workflow builder
 # ---------------------------------------------------------------------------
 
-def make_generator_tool(file_path: str, groq_api_key: str | None = None):
-    @tool
-    def generator(query: str) -> str:
-        """Answer questions about the uploaded document using retrieval-augmented generation."""
-        try:
-            retriever = get_retriever(file_path, k=5)
-            docs = retriever.invoke(query)
-            if not docs:
-                return "I don't know based on the provided document."
-            context_text = "\n\n".join(doc.page_content for doc in docs)
-            prompt = (
-                "You are a document-grounded assistant.\n\n"
-                "Answer ONLY from the provided context.\n"
-                "If the context does not contain enough information, say exactly:\n"
-                '"I don\'t know based on the provided document."\n\n'
-                f"User question:\n{query}\n\n"
-                f"Retrieved context:\n{context_text}\n\nAnswer:"
-            )
-            llm2 = ChatGroq(model="openai/gpt-oss-20b", api_key=groq_api_key)
-            return llm2.invoke(prompt).content
-        except Exception as e:
-            return f"RAG tool error: {e}"
-    return generator
+def build_workflow(file_path: str | None = None) -> object:
+    """
+    Compile a LangGraph workflow.
 
-
-def build_workflow(file_path: str | None = None, groq_api_key: str | None = None) -> object:
+    When file_path is provided, a RAG tool for that document is injected and
+    the system prompt is extended with document-mode instructions.
+    """
     tools: list = [current_weather, internet_search, get_stock_price, date_time]
+
     system_message = BASE_SYSTEM_MESSAGE
     if file_path:
-        tools.append(make_generator_tool(file_path, groq_api_key=groq_api_key))
+        tools.append(make_generator_tool(file_path))
         system_message = f"{BASE_SYSTEM_MESSAGE}\n\n{DOCUMENT_ADDENDUM}"
 
-    llm1 = ChatGroq(model="openai/gpt-oss-120b", api_key=groq_api_key)
     llm_with_tools = llm1.bind_tools(tools)
 
     def chat_node(state: ChatState) -> dict:
@@ -253,10 +237,13 @@ def build_workflow(file_path: str | None = None, groq_api_key: str | None = None
         return {"messages": [response]}
 
     tool_node = ToolNode(tools)
+
     graph = StateGraph(ChatState)
     graph.add_node("chat_node", chat_node)
     graph.add_node("tools", tool_node)
+
     graph.add_edge(START, "chat_node")
     graph.add_conditional_edges("chat_node", tools_condition)
     graph.add_edge("tools", "chat_node")
+
     return graph.compile(checkpointer=InMemorySaver())
