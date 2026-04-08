@@ -27,9 +27,6 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 STOCK_API_KEY = os.getenv("STOCK_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-# --- Models ---
-llm1 = ChatGroq(model="openai/gpt-oss-120b")
-llm2 = ChatGroq(model="openai/gpt-oss-20b")
 
 # --- Embeddings ---
 embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -162,6 +159,7 @@ def make_generator_tool(file_path: str):
                 f"Retrieved context:\n{context_text}\n\n"
                 "Answer:"
             )
+            llm2 = ChatGroq(model="openai/gpt-oss-20b")
             return llm2.invoke(prompt).content
 
         except Exception as e:  # noqa: BLE001
@@ -227,7 +225,7 @@ def build_workflow(file_path: str | None = None) -> object:
     if file_path:
         tools.append(make_generator_tool(file_path))
         system_message = f"{BASE_SYSTEM_MESSAGE}\n\n{DOCUMENT_ADDENDUM}"
-
+    llm1 = ChatGroq(model="openai/gpt-oss-120b")
     llm_with_tools = llm1.bind_tools(tools)
 
     def chat_node(state: ChatState) -> dict:
