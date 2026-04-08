@@ -159,7 +159,7 @@ def make_generator_tool(file_path: str):
                 f"Retrieved context:\n{context_text}\n\n"
                 "Answer:"
             )
-            llm2 = ChatGroq(model="openai/gpt-oss-20b")
+            llm2 = ChatGroq(model="openai/gpt-oss-20b", api_key=groq_api_key)
             return llm2.invoke(prompt).content
 
         except Exception as e:  # noqa: BLE001
@@ -225,7 +225,7 @@ def build_workflow(file_path: str | None = None) -> object:
     if file_path:
         tools.append(make_generator_tool(file_path))
         system_message = f"{BASE_SYSTEM_MESSAGE}\n\n{DOCUMENT_ADDENDUM}"
-    llm1 = ChatGroq(model="openai/gpt-oss-120b")
+    llm1 = ChatGroq(model="openai/gpt-oss-120b", api_key=groq_api_key)
     llm_with_tools = llm1.bind_tools(tools)
 
     def chat_node(state: ChatState) -> dict:
