@@ -23,7 +23,7 @@ from langgraph.prebuilt import ToolNode, tools_condition
 load_dotenv()
 
 ALPHAVANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+groq_api_key = os.getenv("GROQ_API_KEY")
 STOCK_API_KEY = os.getenv("STOCK_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
