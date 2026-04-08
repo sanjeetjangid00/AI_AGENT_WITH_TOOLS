@@ -1,15 +1,3 @@
-"""
-Agent_With_Tools_App.py  —  Enhanced UI with token streaming & live tool indicators.
-
-New in this version:
-- Token-by-token streaming via LangGraph stream_mode="messages"
-- Live tool-call banners that appear while the agent runs tools
-- Premium dark terminal UI with custom CSS
-- Animated typing cursor during streaming
-- Sidebar stats (message count, active tools, file info)
-- Toast-style notifications for file indexing
-"""
-
 from __future__ import annotations
 
 import hashlib
