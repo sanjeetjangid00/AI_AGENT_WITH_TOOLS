@@ -7,8 +7,6 @@ from pathlib import Path
 
 import streamlit as st
 from langchain_core.messages import HumanMessage
-
-from Agent_With_Tools import build_workflow
 import os
 
 
@@ -24,7 +22,7 @@ if "STOCK_API_KEY" in st.secrets:
 if "HF_TOKEN" in st.secrets:
     os.environ["HF_TOKEN"] = st.secrets["HF_TOKEN"]
 
-
+from Agent_With_Tools import build_workflow
 
 
 
