@@ -14,4 +14,4 @@ duckduckgo-search
 docx2txt
 pypdf
 sentence-transformers
-
+torchvision
