@@ -1,11 +1,17 @@
-langchain
-langchain-core
-langchain-community
 ddgs
-langchain-groq
-python-dotenv
-streamlit
-requests
 langchain-text-splitters
+streamlit
+langchain
+langchain-community
+langchain-core
+langgraph
+langchain-groq
 langchain-huggingface
+faiss-cpu
+python-dotenv
+requests
+duckduckgo-search
+docx2txt
+pypdf
+sentence-transformers
 
