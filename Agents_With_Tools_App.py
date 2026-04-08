@@ -10,19 +10,24 @@ from langchain_core.messages import HumanMessage
 import os
 
 
+# At the very top of Agents_With_Tools_App.py, after the secrets block:
+
 if "ALPHAVANTAGE_API_KEY" in st.secrets:
     os.environ["ALPHAVANTAGE_API_KEY"] = st.secrets["ALPHAVANTAGE_API_KEY"]
 
 if "GROQ_API_KEY" in st.secrets:
-    GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
-    
+    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+
 if "STOCK_API_KEY" in st.secrets:
     os.environ["STOCK_API_KEY"] = st.secrets["STOCK_API_KEY"]
-    
+
 if "HF_TOKEN" in st.secrets:
     os.environ["HF_TOKEN"] = st.secrets["HF_TOKEN"]
 
-from Agent_With_Tools import build_workflow
+# ADD THIS LINE immediately after the secrets block:
+GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
+
+from Agent_With_Tools import build_workflow  # keep this below
 
 
 # ---------------------------------------------------------------------------
