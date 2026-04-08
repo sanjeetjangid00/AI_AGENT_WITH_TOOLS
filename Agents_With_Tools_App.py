@@ -531,9 +531,9 @@ else:
             workflow       = build_workflow(None, groq_api_key=GROQ_API_KEY),
             chat_history   = [],
         )
-        elif st.session_state.mode != "normal":
-            st.session_state.mode     = "normal"
-            st.session_state.workflow = build_workflow(None, groq_api_key=GROQ_API_KEY)
+    elif st.session_state.mode != "normal":
+        st.session_state.mode     = "normal"
+        st.session_state.workflow = build_workflow(None, groq_api_key=GROQ_API_KEY)
 # ---------------------------------------------------------------------------
 # Main area — header
 # ---------------------------------------------------------------------------
