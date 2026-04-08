@@ -9,6 +9,24 @@ import streamlit as st
 from langchain_core.messages import HumanMessage
 
 from Agent_With_Tools import build_workflow
+import os
+
+
+if "ALPHAVANTAGE_API_KEY" in st.secrets:
+    os.environ["ALPHAVANTAGE_API_KEY"] = st.secrets["ALPHAVANTAGE_API_KEY"]
+
+if "GROQ_API_KEY" in st.secrets:
+    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+    
+if "STOCK_API_KEY" in st.secrets:
+    os.environ["STOCK_API_KEY"] = st.secrets["STOCK_API_KEY"]
+    
+if "HF_TOKEN" in st.secrets:
+    os.environ["HF_TOKEN"] = st.secrets["HF_TOKEN"]
+
+
+
+
 
 # ---------------------------------------------------------------------------
 # Page config  (must be first Streamlit call)
