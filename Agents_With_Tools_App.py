@@ -30,11 +30,7 @@ GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 from Agent_With_Tools import build_workflow  # keep this below
 
 
-# ---------------------------------------------------------------------------
-# Page config  (must be first Streamlit call)
-# ---------------------------------------------------------------------------
-
-st.set_page_config(
+#st.set_page_config(
     page_title="AI Agent",
     page_icon="⚡",
     layout="centered",
@@ -411,15 +407,12 @@ def _init(key: str, value) -> None:
 
 _init("thread_id",      str(uuid.uuid4()))
 _init("mode",           "normal")
+_init("workflow",       build_workflow(None))
 _init("file_path",      "")
 _init("file_name",      "")
 _init("file_hash",      "")
 _init("document_ready", False)
-_init("chat_history",   [])
-
-# Add this — only built once, after secrets are already in os.environ
-if "workflow" not in st.session_state:
-    st.session_state.workflow = build_workflow(None, groq_api_key=GROQ_API_KEY)
+_init("chat_history",   [])   # list[dict]: role, content, tools_used, ts
 
 config = {"configurable": {"thread_id": st.session_state.thread_id}}
 
@@ -473,8 +466,7 @@ with st.sidebar:
             st.session_state.update(
                 document_ready=False, file_path="", file_name="",
                 file_hash="", mode="normal",
-                workflow=build_workflow(None, groq_api_key=GROQ_API_KEY),
-                chat_history=[],
+                workflow=build_workflow(None), chat_history=[],
             )
             st.rerun()
 
@@ -512,15 +504,15 @@ def process_uploaded_file(file_obj) -> None:
     with st.spinner(f"Indexing '{file_name}'…"):
         with open(save_path, "wb") as fh:
             fh.write(file_bytes)
-            st.session_state.update(
-    file_path      = str(save_path),
-    file_name      = file_name,
-    file_hash      = file_hash,
-    workflow       = build_workflow(str(save_path), groq_api_key=GROQ_API_KEY),
-    document_ready = True,
-    mode           = "document",
-    chat_history   = [],
-)
+        st.session_state.update(
+            file_path      = str(save_path),
+            file_name      = file_name,
+            file_hash      = file_hash,
+            workflow       = build_workflow(str(save_path)),
+            document_ready = True,
+            mode           = "document",
+            chat_history   = [],
+        )
 
     st.toast(f"'{file_name}' indexed successfully", icon="📄")
 
@@ -530,15 +522,18 @@ if uploaded_file is not None:
     process_uploaded_file(uploaded_file)
 else:
     if st.session_state.document_ready:
+        # File was removed from the uploader — exit document mode.
         st.session_state.update(
             document_ready = False,
             mode           = "normal",
-            workflow       = build_workflow(None, groq_api_key=GROQ_API_KEY),
+            workflow       = build_workflow(None),
             chat_history   = [],
         )
     elif st.session_state.mode != "normal":
         st.session_state.mode     = "normal"
-        st.session_state.workflow = build_workflow(None, groq_api_key=GROQ_API_KEY)
+        st.session_state.workflow = build_workflow(None)
+
+
 # ---------------------------------------------------------------------------
 # Main area — header
 # ---------------------------------------------------------------------------
@@ -605,7 +600,6 @@ if user_input:
         reply, tools_used = stream_and_render(
             st.session_state.workflow, initial_state, config
         )
-        
 
     # Persist assistant turn (including which tools were called).
     st.session_state.chat_history.append(
