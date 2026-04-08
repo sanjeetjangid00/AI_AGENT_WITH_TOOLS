@@ -30,7 +30,7 @@ GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", "")
 from Agent_With_Tools import build_workflow  # keep this below
 
 
-#st.set_page_config(
+st.set_page_config(
     page_title="AI Agent",
     page_icon="⚡",
     layout="centered",
