@@ -180,28 +180,26 @@ class ChatState(TypedDict):
 
 
 # ---------------------------------------------------------------------------
-# System prompt  (improved)
+# System prompts
 # ---------------------------------------------------------------------------
 
+# Base prompt — no mention of generator or document state.
+# Document state is always explicitly injected via one of the two addendums below.
 BASE_SYSTEM_MESSAGE = """
 You are a precision-oriented AI assistant with access to the following tools:
 
 TOOLS:
-- date_time         → Returns the current system date and time.
-- current_weather   → Returns live weather data for a given city or location.
-- get_stock_price   → Returns a real-time stock quote for a given ticker symbol.
-- internet_search   → Searches the live web for current or general information.
+- date_time         -> Returns the current system date and time.
+- current_weather   -> Returns live weather data for a given city or location.
+- get_stock_price   -> Returns a real-time stock quote for a given ticker symbol.
+- internet_search   -> Searches the live web for current or general information.
 
 TOOL SELECTION RULES (apply in order):
-1. If the user asks about a document, file, or uploaded content AND `generator`
-   is not in your available tools → reply exactly:
-   "No document has been uploaded yet. Please upload a document first."
-   Do not call any other tool or answer from general knowledge.
-2. If the question is about weather → use `current_weather` only.
-3. If the question is about a stock, ticker, or market price → use `get_stock_price` only.
-4. If the question requires the current date/time → use `date_time` first.
-5. For all other time-sensitive or factual questions → use `internet_search`.
-6. If no tool is clearly needed, answer from your own knowledge directly.
+1. If the question is about weather -> use `current_weather` only.
+2. If the question is about a stock, ticker, or market price -> use `get_stock_price` only.
+3. If the question requires the current date/time -> use `date_time` first.
+4. For all other time-sensitive or factual questions -> use `internet_search`.
+5. If no tool is clearly needed, answer from your own knowledge directly.
 
 MULTI-INTENT QUERIES:
 - If the user asks multiple questions in one message, handle each sub-question
@@ -224,20 +222,30 @@ RESPONSE STYLE:
 - If the exact answer cannot be found, say so clearly and briefly.
 """.strip()
 
+# Appended when NO file is uploaded.
+# Explicitly tells the LLM the document status so it never tries to infer it.
+NO_DOCUMENT_ADDENDUM = """
+
+DOCUMENT STATUS: No document has been uploaded.
+- You do NOT have a document tool available.
+- If the user asks anything about a document, file, or uploaded content,
+  respond with exactly:
+  "No document has been uploaded yet. Please upload a document first."
+- Do not attempt to answer document questions from general knowledge.
+- Do not call any tool in response to document questions.
+""".strip()
+
 # Appended ONLY when a file is uploaded and `generator` is registered in tools.
-# Keeping it separate ensures the LLM never attempts to call `generator`
-# when no document is present.
 DOCUMENT_ADDENDUM = """
 
-DOCUMENT MODE (active — a file has been uploaded):
+DOCUMENT STATUS: A document has been uploaded and is ready to query.
 
 ADDITIONAL TOOL:
-- generator → Queries the content of the user's uploaded document using
-               retrieval-augmented generation. Use this tool whenever the
-               user's question is about the uploaded file.
+- generator -> Queries the uploaded document using retrieval-augmented generation.
+               Use this tool whenever the user's question is about the uploaded file.
 
-UPDATED TOOL SELECTION RULES (prepend to existing rules):
-0. If the question is about the uploaded document → use `generator` first,
+UPDATED TOOL SELECTION RULES (highest priority - evaluate before all others):
+0. If the question is about the uploaded document -> use `generator` immediately,
    before considering any other tool.
 
 DOCUMENT TOOL DISCIPLINE:
@@ -256,15 +264,21 @@ def build_workflow(file_path: str | None = None) -> object:
     """
     Compile a LangGraph workflow.
 
-    When file_path is provided, a RAG tool for that document is injected and
-    the system prompt is extended with document-mode instructions.
+    When file_path is provided, the generator RAG tool is injected and the
+    system prompt explicitly signals document-ready status.
+
+    When file_path is None, the system prompt explicitly signals no-document
+    status so the LLM never attempts to call a missing tool.
     """
     tools: list = [current_weather, internet_search, get_stock_price, date_time]
 
-    system_message = BASE_SYSTEM_MESSAGE
     if file_path:
         tools.append(make_generator_tool(file_path))
+        # Explicitly tell the LLM: document IS available, generator IS a valid tool.
         system_message = f"{BASE_SYSTEM_MESSAGE}\n\n{DOCUMENT_ADDENDUM}"
+    else:
+        # Explicitly tell the LLM: no document, do NOT attempt to use generator.
+        system_message = f"{BASE_SYSTEM_MESSAGE}\n\n{NO_DOCUMENT_ADDENDUM}"
 
     llm_with_tools = llm1.bind_tools(tools)
 
