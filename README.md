@@ -50,11 +50,12 @@ This system intelligently selects tools based on user queries and ensures **accu
 ---
 
 ## 📂 Project Structure
+```
 ├── main.py / app.py
 ├── .env
 ├── requirements.txt
 └── README.md
-
+```
 
 ---
 
