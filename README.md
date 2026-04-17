@@ -51,7 +51,8 @@ This system intelligently selects tools based on user queries and ensures **accu
 
 ## 📂 Project Structure
 ```
-├── main.py / app.py
+├── Agents_With_Tools.py # Backend
+├──Agents_With_Tools_App.py # Frontend
 ├── .env
 ├── requirements.txt
 └── README.md
