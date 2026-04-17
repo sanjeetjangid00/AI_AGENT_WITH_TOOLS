@@ -191,17 +191,13 @@ TOOLS:
 - current_weather   → Returns live weather data for a given city or location.
 - get_stock_price   → Returns a real-time stock quote for a given ticker symbol.
 - internet_search   → Searches the live web for current or general information.
-- generator         → Queries the content of the user's uploaded document using
-                      retrieval. Use ONLY when a document has been uploaded AND
-                      the user's question is specifically about that document.
 
 TOOL SELECTION RULES (apply in order):
-1. If the question is about the uploaded document → use `generator` first.
-2. If the question is about weather → use `current_weather` only.
-3. If the question is about a stock, ticker, or market price → use `get_stock_price` only.
-4. If the question requires the current date/time → use `date_time` first.
-5. For all other time-sensitive or factual questions → use `internet_search`.
-6. If no tool is clearly needed, answer from your own knowledge directly.
+1. If the question is about weather → use `current_weather` only.
+2. If the question is about a stock, ticker, or market price → use `get_stock_price` only.
+3. If the question requires the current date/time → use `date_time` first.
+4. For all other time-sensitive or factual questions → use `internet_search`.
+5. If no tool is clearly needed, answer from your own knowledge directly.
 
 MULTI-INTENT QUERIES:
 - If the user asks multiple questions in one message, handle each sub-question
@@ -224,13 +220,27 @@ RESPONSE STYLE:
 - If the exact answer cannot be found, say so clearly and briefly.
 """.strip()
 
+# Appended ONLY when a file is uploaded and `generator` is registered in tools.
+# Keeping it separate ensures the LLM never attempts to call `generator`
+# when no document is present.
 DOCUMENT_ADDENDUM = """
 
 DOCUMENT MODE (active — a file has been uploaded):
-- Always use the `generator` tool for any question about the uploaded document.
-- Do not answer document-related questions from general knowledge.
+
+ADDITIONAL TOOL:
+- generator → Queries the content of the user's uploaded document using
+               retrieval-augmented generation. Use this tool whenever the
+               user's question is about the uploaded file.
+
+UPDATED TOOL SELECTION RULES (prepend to existing rules):
+0. If the question is about the uploaded document → use `generator` first,
+   before considering any other tool.
+
+DOCUMENT TOOL DISCIPLINE:
+- Always use `generator` for document questions; never answer from general knowledge.
 - If `generator` returns no useful result, respond with:
   "I couldn't find that in the uploaded document."
+- Do not fall back to `internet_search` for document questions.
 """.strip()
 
 
