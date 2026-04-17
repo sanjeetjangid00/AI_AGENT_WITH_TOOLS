@@ -73,9 +73,11 @@ pip install -r requirements.txt
 ```
 
 ### 3. Create .env file
+```
 GROQ_API_KEY=your_groq_key
 ALPHAVANTAGE_API_KEY=your_alpha_vantage_key
 HF_TOKEN=your_huggingface_token
+```
 ▶️ Usage
 Run the assistant
 ```bash
@@ -87,9 +89,9 @@ Then pass messages into the graph.
 
 ### 📄 Supported Inputs
 Type	Supported
-PDF	✅
-TXT	✅
-DOCX	✅
+- PDF	✅
+- TXT	✅
+- DOCX	✅
 
 ### 🔍 How It Works
 #### 1. Document Processing
@@ -129,12 +131,12 @@ Tool Execution (if needed)
 Response Generation
 ```
 
-⚠️ Important Design Decisions
-❌ No hallucination of real-time data
-❌ No repeated tool calls
-❌ No fallback to web for document queries
-✅ Strict tool usage rules
-✅ Cached retriever (performance optimized)
+## ⚠️ Important Design Decisions
+- ❌ No hallucination of real-time data
+- ❌ No repeated tool calls
+- ❌ No fallback to web for document queries
+- ✅ Strict tool usage rules
+- ✅ Cached retriever (performance optimized)
 
-👨‍💻 Author
+**👨‍💻 Author**
 Sanjeet Jangid
